@@ -799,6 +799,7 @@ static int cmd_run(char *string_ptr)
     tr_info("Executing cmd: '%s'", string_ptr);
     char *command_str = MEM_ALLOC(MAX_LINE);
     if (command_str == NULL) {
+        cmd_printf("Mem alloc failed!\r\n");
         tr_error("mem alloc failed in cmd_run");
         return CMDLINE_RETCODE_FAIL;
     }
