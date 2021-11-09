@@ -16,6 +16,8 @@
  */
 
 #include <stdio.h>
+#include <unistd.h>
+#include <signal.h>
 
 // to achieve more identical behaviour with mbed device you can active ncurses
 //#define EXAMPLE_USE_NCURSES 1
@@ -32,6 +34,14 @@
 #ifndef CTRL
 #define CTRL(c) ((c) & 037)
 #endif
+
+static void signal_handler(int signal)
+{
+    if (signal == SIGALRM) {
+        cmd_ready(CMDLINE_RETCODE_SUCCESS);
+        cmd_printf("Delayed command finished");
+    }
+}
 
 // dummy command with some option
 static int cmd_dummy(int argc, char *argv[])
@@ -52,6 +62,13 @@ static int cmd_exit(int argc, char *argv[])
     return CMDLINE_RETCODE_SUCCESS;
 }
 
+static int cmd_delayed(int argc, char *argv[])
+{
+    (void)argc;
+    (void)argv;
+    alarm(2);
+    return CMDLINE_RETCODE_EXCUTING_CONTINUE;
+}
 
 int main(void)
 {
@@ -60,6 +77,9 @@ int main(void)
     raw();        // Line buffering disabled
     noecho();     // Don't echo() while we do getch
 #endif
+
+    signal(SIGALRM, signal_handler);
+
     // Initialize trace library
     mbed_trace_init();
     cmd_init(0);   // initialize cmdline with print function
@@ -68,6 +88,10 @@ int main(void)
             "dummy command",
             "This is dummy command, which does not do anything except\n"
             "print text when o -option is given."); // add one dummy command
+    cmd_add("delayed",
+            cmd_delayed,
+            "Command with delayed result.",
+            "Command that can be used to test executing continue result.");
 
     cmd_init_screen();
     while (running) {
